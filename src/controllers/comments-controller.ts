@@ -5,7 +5,6 @@ import { CommentService } from '../services'
 import {
   RequestWithParams,
   RequestWithParamsAndBody,
-  ResponseViewModelDetail,
   URIParamsCommentModel,
   UserRequestModel,
   UpdateCommentModel,
@@ -27,7 +26,7 @@ export class CommentsController {
       return res.status(HTTPStatuses.NOTFOUND404).send()
     }
 
-    res.status(HTTPStatuses.SUCCESS200).send(this._getCommentViewModel(commentById))
+    res.status(HTTPStatuses.SUCCESS200).send(this._getCommentViewModel(commentById, req?.user?.userId))
   }
   async updateComment(req: RequestWithParamsAndBody<URIParamsCommentModel, UpdateCommentModel> & UserRequestModel & any, res: Response<boolean>) {
     const commentById = await this.commentService.findCommentById(req.params.id)
@@ -58,10 +57,6 @@ export class CommentsController {
       return res.status(HTTPStatuses.NOTFOUND404).send()
     }
 
-    if (commentById.userId !== req.user!.userId || commentById.userLogin !== req.user!.login) {
-      return res.status(HTTPStatuses.FORBIDDEN403).send()
-    }
-
     const isLikeUpdated = await this.commentService.updateLikeStatusToComment(commentById.id, {
       userId: req.user!.userId,
       userLogin: req.user!.login,
@@ -89,13 +84,9 @@ export class CommentsController {
     
     res.status(HTTPStatuses.NOCONTENT204).send()
   }
-  _getCommentViewModel(dbComment: CommentType): CommentViewModel {
-    const currentLike = dbComment.likes.find(item => item.userId === dbComment.userId)
-    const currentDislike = dbComment.dislikes.find(item => item.userId === dbComment.userId)
-
-    const currentLikeStatus = currentLike ? currentLike.likeStatus : LikeStatuses.NONE
-    const currentDislikeStatus = currentDislike ? currentDislike.likeStatus : LikeStatuses.NONE
-
+  _getCommentViewModel(dbComment: CommentType, userId: string): CommentViewModel {
+    const myStatus = this._getMyStatus(dbComment, userId)
+    
     return {
       id: dbComment.id,
       content: dbComment.content,
@@ -107,47 +98,30 @@ export class CommentsController {
       likesInfo: {
         likesCount: dbComment.likesCount,
         dislikesCount: dbComment.dislikesCount,
-        myStatus: currentLikeStatus !== LikeStatuses.NONE ? currentLikeStatus : currentDislikeStatus,
-        likes: dbComment.likes,
-        dislikes: dbComment.dislikes,
+        myStatus,
+        // likes: dbComment.likes,
+        // dislikes: dbComment.dislikes,
       },      
     }
-  }
-  _getCommentsViewModelDetail({
-    items,
-    totalCount,
-    pagesCount,
-    page,
-    pageSize,
-  }: ResponseViewModelDetail<CommentType>): ResponseViewModelDetail<CommentViewModel> {
-      return {
-        pagesCount,
-        page,
-        pageSize,
-        totalCount,
-        items: items.map(item => {
-          const currentLike = item.likes.find(i => i.userId === item.userId)
-          const currentDislike = item.dislikes.find(i => i.userId === item.userId)
-      
-          const currentLikeStatus = currentLike ? currentLike.likeStatus : LikeStatuses.NONE
-          const currentDislikeStatus = currentDislike ? currentDislike.likeStatus : LikeStatuses.NONE
-          
-          return {
-          id: item.id,
-          content: item.content,
-          commentatorInfo: {
-            userId: item.userId,
-            userLogin: item.userLogin,
-          },
-          createdAt: item.createdAt,
-          likesInfo: {
-            likesCount: item.likesCount,
-            dislikesCount: item.dislikesCount,
-            myStatus: currentLikeStatus === LikeStatuses.NONE ? currentLikeStatus : currentDislikeStatus,
-            likes: item.likes,
-            dislikes: item.dislikes,
-          },      
-        }}),
-      }
+  } 
+  _getMyStatus(dbComment: CommentType, userId: string): LikeStatuses {
+    if (!userId) {
+      return LikeStatuses.NONE
     }
+
+    const currentLike = dbComment.likes.find(item => item.userId === userId)
+
+    if (currentLike) {
+      return currentLike.likeStatus
+    }
+
+    const currentDislike = dbComment.dislikes.find(item => item.userId === userId)
+
+    if (currentDislike) {
+      return currentDislike.likeStatus
+    }
+
+    return LikeStatuses.NONE
+    
   }
+}
