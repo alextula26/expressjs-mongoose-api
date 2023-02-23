@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { injectable, inject } from 'inversify'
 import { trim } from 'lodash'
-import { BlogRepository } from '../repositories/blog/blog-db-mongoose-repository'
+import { BlogRepository } from '../repositories'
 
 import {
   BlogType,
@@ -26,7 +26,7 @@ export class BlogService {
     pageSize,
     sortBy = 'createdAt',
     sortDirection =  SortDirection.DESC,
-  }: QueryBlogModel): Promise<ResponseViewModelDetail<BlogViewModel>> {
+  }: QueryBlogModel): Promise<ResponseViewModelDetail<BlogType>> {
     const foundAllBlogs = await this.blogRepository.findAllBlogs({
       searchNameTerm,
       pageNumber,
@@ -37,7 +37,7 @@ export class BlogService {
 
     return foundAllBlogs
   }
-  async findBlogById(id: string): Promise<BlogViewModel | null> {
+  async findBlogById(id: string): Promise<BlogType | null> {
     const foundBlogById = await this.blogRepository.findBlogById(id)
 
     return foundBlogById
@@ -48,7 +48,7 @@ export class BlogService {
     pageSize,
     sortBy = 'createdAt',
     sortDirection =  SortDirection.DESC,
-  }: QueryPostModel): Promise<ResponseViewModelDetail<PostViewModel>> {
+  }: QueryPostModel): Promise<ResponseViewModelDetail<PostType>> {
     const foundPostsByBlogId = await this.blogRepository.findPostsByBlogId(blogId, {
       searchNameTerm,
       pageNumber,
@@ -62,7 +62,7 @@ export class BlogService {
     name, 
     description, 
     websiteUrl,
-  }: CreaetBlogService): Promise<BlogViewModel> {
+  }: CreaetBlogService): Promise<BlogType> {
     const blogName = trim(String(name))
     const blogDescription = trim(String(description))
     const blogWebsiteUrl = trim(String(websiteUrl))
@@ -78,7 +78,7 @@ export class BlogService {
     content,
     blogId,
     blogName,
-  }: CreaetPostService): Promise<PostViewModel> {
+  }: CreaetPostService): Promise<PostType> {
     const postTitle = trim(String(title))
     const postShortDescription = trim(String(shortDescription))
     const postContent = trim(String(content))

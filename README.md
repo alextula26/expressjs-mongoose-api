@@ -1,1 +1,1 @@
-# expressjs-api + mongodb
+# expressjs + mongoose

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "expressjs-mongoose-api",
+  "name": "expressjs-mongoose-api-ya",
   "builds": [
      {
       "src": "src/index.ts",

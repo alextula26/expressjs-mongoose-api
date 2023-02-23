@@ -1,6 +1,8 @@
-import { SessionModel } from '../db-mongoose'
-import { SessionType } from '../../types'
+import { injectable } from 'inversify'
+import { SessionModel } from './db-mongoose'
+import { SessionType } from '../types'
 
+@injectable()
 export class SessionRepository {
   async findSession(ip: string, url: string, deviceTitle: string): Promise<SessionType | null> {
     const foundSession: SessionType | null = await SessionModel.findOne({
@@ -25,7 +27,7 @@ export class SessionRepository {
       return null
     }
 
-    return null
+    return document
   }
   async resetAttempt(id: string): Promise<boolean> {
     const { matchedCount } = await SessionModel.updateOne({ id }, {
